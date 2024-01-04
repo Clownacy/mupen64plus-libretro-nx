@@ -35,8 +35,10 @@
 #ifdef HAVE_LIBNX
 #include <switch.h>
 #endif
-#include <pthread.h>
-#include <glsm/glsmsym.h>
+#ifdef HAVE_GLIDEN64
+   #include <pthread.h>
+   #include <glsm/glsmsym.h>
+#endif
 
 #include "api/m64p_frontend.h"
 #include "api/m64p_types.h"
@@ -187,7 +189,9 @@ uint32_t MultiSampling = 0;
 uint32_t EnableFragmentDepthWrite = 0;
 uint32_t EnableShadersStorage = 0;
 uint32_t EnableTextureCache = 0;
+#ifdef HAVE_GLIDEN64
 uint32_t EnableFBEmulation = 0;
+#endif
 uint32_t EnableFrameDuping = 0;
 uint32_t EnableLODEmulation = 0;
 uint32_t BackgroundMode = 0; // 0 is bgOnePiece
@@ -197,7 +201,9 @@ uint32_t EnableEnhancedHighResStorage = 0;
 uint32_t EnableTxCacheCompression = 0;
 uint32_t EnableNativeResFactor = 0;
 uint32_t EnableN64DepthCompare = 0;
+#ifdef HAVE_GLIDEN64
 uint32_t EnableThreadedRenderer = 0;
+#endif
 uint32_t EnableCopyAuxToRDRAM = 0;
 uint32_t GLideN64IniBehaviour = 0;
 
@@ -221,7 +227,9 @@ extern unsigned int r4300_emumode;
 extern struct cheat_ctx g_cheat_ctx;
 
 static bool emuThreadRunning = false;
+#ifdef HAVE_GLIDEN64
 static pthread_t emuThread;
+#endif
 
 // after the controller's CONTROL* member has been assigned we can update
 // them straight from here...
@@ -479,11 +487,13 @@ static void* EmuThreadFunction(void* param)
     // Runs until CMD_STOP
     CoreDoCommand(M64CMD_EXECUTE, 0, NULL);
 
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer)
     {
         // Unset
         emuThreadRunning = false;
     }
+#endif
 
     return NULL;
 }
@@ -714,7 +724,9 @@ void retro_init(void)
 
     environ_cb(RETRO_ENVIRONMENT_SET_PIXEL_FORMAT, &colorMode);
     environ_cb(RETRO_ENVIRONMENT_GET_RUMBLE_INTERFACE, &rumble);
+#ifdef HAVE_GLIDEN64
     if(!(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer))
+#endif
     {
         initializing = true;
 
@@ -732,7 +744,9 @@ void retro_deinit(void)
     // Prevent yield to game_thread on unsuccessful context request
     if(load_game_successful)
     {
+#ifdef HAVE_GLIDEN64
        if(!(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer))
+#endif
        {
            CoreDoCommand(M64CMD_STOP, 0, NULL);
            co_switch(game_thread); /* Let the core thread finish */
@@ -875,11 +889,13 @@ static void update_variables(bool startup)
 #elif defined(HAVE_LLE)
                 plugin_connect_rsp_api(RSP_PLUGIN_CXD4);
                 log_cb(RETRO_LOG_INFO, "Selected HLE RSP with Angrylion, falling back to CXD4!\n");
-#else
+#elif defined(HAVE_GLIDEN64)
                 log_cb(RETRO_LOG_INFO, "Requested Angrylion but no LLE RSP available, falling back to GLideN64!\n");
                 plugin_connect_rsp_api(RSP_PLUGIN_HLE);
                 plugin_connect_rdp_api(RDP_PLUGIN_GLIDEN64);
-#endif 
+#else
+                #error ParaLLEl RSP, CXD4, or GLideN64 should be enabled.
+#endif
              }
           }
           else if (!strcmp(var.value, "cxd4"))
@@ -903,26 +919,30 @@ static void update_variables(bool startup)
              plugin_connect_rsp_api(RSP_PLUGIN_PARALLEL);
 #elif defined(HAVE_LLE)
              plugin_connect_rsp_api(RSP_PLUGIN_CXD4);
-#else
+#elif defined(HAVE_GLIDEN64)
              log_cb(RETRO_LOG_INFO, "Requested Angrylion but no LLE RSP available, falling back to GLideN64!\n");
              plugin_connect_rdp_api(RDP_PLUGIN_GLIDEN64);
              plugin_connect_rsp_api(RSP_PLUGIN_HLE);
-#endif 
+#else
+             #error ParaLLEl RSP, CXD4, or GLideN64 should be enabled.
+#endif
           }
        }
        
+#ifdef HAVE_GLIDEN64
        var.key = CORE_NAME "-ThreadedRenderer";
        var.value = NULL;
        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
        {
           EnableThreadedRenderer = !strcmp(var.value, "True") ? 1 : 0;
        }
-	    
+
        if(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer)
        {
           unsigned poll_type_early      = 1; /* POLL_TYPE_EARLY */
           environ_cb(RETRO_ENVIRONMENT_POLL_TYPE_OVERRIDE, &poll_type_early);
        }
+#endif
 
        var.key = CORE_NAME "-BilinearMode";
        var.value = NULL;
@@ -1008,12 +1028,14 @@ static void update_variables(bool startup)
           EnableLODEmulation = !strcmp(var.value, "False") ? 0 : 1;
        }
 
+#ifdef HAVE_GLIDEN64
        var.key = CORE_NAME "-EnableFBEmulation";
        var.value = NULL;
        if (environ_cb(RETRO_ENVIRONMENT_GET_VARIABLE, &var) && var.value)
        {
           EnableFBEmulation = !strcmp(var.value, "False") ? 0 : 1;
        }
+#endif
 
        var.key = CORE_NAME "-EnableN64DepthCompare";
        var.value = NULL;
@@ -1373,8 +1395,10 @@ static void update_variables(bool startup)
        if(EnableFullspeed)
        {
           CountPerOp = 1; // Force CountPerOp == 1
+#ifdef HAVE_GLIDEN64
           if(current_rdp_type == RDP_PLUGIN_GLIDEN64 && !EnableFBEmulation)
              EnableFrameDuping = 1;
+#endif
        }
 
 #ifdef HAVE_THR_AL
@@ -1752,6 +1776,7 @@ void context_reset(void)
 {
     static bool first_init = true;
 
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
     {
        log_cb(RETRO_LOG_DEBUG, CORE_NAME ": context_reset()\n");
@@ -1762,16 +1787,19 @@ void context_reset(void)
           first_init = false;
        }
     }
+#endif
 
     reinit_gfx_plugin();
 }
 
 static void context_destroy(void)
 {
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
     {
        glsm_ctl(GLSM_CTL_STATE_CONTEXT_DESTROY, NULL);
     }
+#endif
 #ifdef HAVE_PARALLEL_RDP
     if (current_rdp_type == RDP_PLUGIN_PARALLEL)
         parallel_deinit();
@@ -1886,20 +1914,25 @@ bool retro_load_game(const struct retro_game_info *game)
     retro_savestate_complete = true;
     load_game_successful = false;
 
+#ifdef HAVE_GLIDEN64
     glsm_ctx_params_t params = {0};
+#endif
     format_saved_memory();
 
     update_variables(true);
 
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer)
     {
        initializing = true;
        retro_thread = co_active();
        game_thread = co_create(65536 * sizeof(void*) * 16, gln64_thr_gl_invoke_command_loop);
     }
+#endif
 
     init_audio_libretro(audio_buffer_size);
 
+#ifdef HAVE_GLIDEN64
     params.context_reset         = context_reset;
     params.context_destroy       = context_destroy;
     params.environ_cb            = environ_cb;
@@ -1912,6 +1945,7 @@ bool retro_load_game(const struct retro_game_info *game)
             log_cb(RETRO_LOG_ERROR, CORE_NAME ": libretro frontend doesn't have OpenGL support\n");
         return false;
     }
+#endif
 
 #ifdef HAVE_PARALLEL_RDP
     if (current_rdp_type == RDP_PLUGIN_PARALLEL)
@@ -1948,6 +1982,7 @@ bool retro_load_game(const struct retro_game_info *game)
 
 void retro_unload_game(void)
 {
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer)
     {
        environ_clear_thread_waits_cb(1, NULL);
@@ -1971,6 +2006,7 @@ void retro_unload_game(void)
 
        CoreDoCommand(M64CMD_ROM_CLOSE, 0, NULL);
     }
+#endif
 
     cleanup_global_paths();
     
@@ -1990,6 +2026,7 @@ void retro_run (void)
        update_controllers();
     }
 
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
     {
        if(EnableThreadedRenderer)
@@ -2003,20 +2040,26 @@ void retro_run (void)
        
        glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
     }
+#endif
 
     co_switch(game_thread);
 
+#ifdef HAVE_GLIDEN64
     if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
     {
        glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
     }
-    
+#endif
+
     if (libretro_swap_buffer)
     {
-       if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
+       if (0);
+#ifdef HAVE_GLIDEN64
+       else if(current_rdp_type == RDP_PLUGIN_GLIDEN64)
        {
           video_cb(RETRO_HW_FRAME_BUFFER_VALID, retro_screen_width, retro_screen_height, 0);
        }
+#endif
 #ifdef HAVE_THR_AL
        else if(current_rdp_type == RDP_PLUGIN_ANGRYLION)
        {
@@ -2085,6 +2128,7 @@ bool retro_serialize(void *data, size_t size)
 
    savestates_set_job(savestates_job_save, savestates_type_m64p, data);
 
+#ifdef HAVE_GLIDEN64
    if (current_rdp_type == RDP_PLUGIN_GLIDEN64)
    {
       if(EnableThreadedRenderer)
@@ -2094,16 +2138,19 @@ bool retro_serialize(void *data, size_t size)
       }
       glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
    }
+#endif
 
    while (!retro_savestate_complete)
    {
       co_switch(game_thread);
    }
 
+#ifdef HAVE_GLIDEN64
    if (current_rdp_type == RDP_PLUGIN_GLIDEN64)
    {
       glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
    }
+#endif
 
    return !!retro_savestate_result;
 }
@@ -2118,6 +2165,7 @@ bool retro_unserialize(const void *data, size_t size)
 
    savestates_set_job(savestates_job_load, savestates_type_m64p, data);
 
+#ifdef HAVE_GLIDEN64
    if (current_rdp_type == RDP_PLUGIN_GLIDEN64)
    {
       if(EnableThreadedRenderer)
@@ -2127,16 +2175,19 @@ bool retro_unserialize(const void *data, size_t size)
       }
       glsm_ctl(GLSM_CTL_STATE_BIND, NULL);
    }
+#endif
 
    while (!retro_savestate_complete)
    {
       co_switch(game_thread);
    }
 
+#ifdef HAVE_GLIDEN64
    if (current_rdp_type == RDP_PLUGIN_GLIDEN64)
    {
       glsm_ctl(GLSM_CTL_STATE_UNBIND, NULL);
    }
+#endif
 
    return true;
 }
@@ -2219,7 +2270,9 @@ void retro_cheat_set(unsigned index, bool enabled, const char* codeLine)
 
 void retro_return(void)
 {
+#ifdef HAVE_GLIDEN64
     if(!(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer))
+#endif
     {
        co_switch(retro_thread);
     }

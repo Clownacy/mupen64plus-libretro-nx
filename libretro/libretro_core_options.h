@@ -41,11 +41,13 @@ struct retro_core_option_v2_category option_cats_us[] = {
       "Pak/Controller Options",
       "Configure Core Pak/Controller Options."
    },
+#ifdef HAVE_GLIDEN64
    {
       "gliden64",
       "GLideN64",
       "Configure GLideN64 Options."
    },
+#endif
 #ifdef HAVE_PARALLEL_RDP
    {
       "parallel_rdp",
@@ -78,7 +80,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #ifdef HAVE_PARALLEL_RDP
             {"parallel", "ParaLLEl-RDP"},
 #endif
+#ifdef HAVE_GLIDEN64
             {"gliden64", "GLideN64"},
+#endif
             { NULL, NULL },
         },
         "gliden64"

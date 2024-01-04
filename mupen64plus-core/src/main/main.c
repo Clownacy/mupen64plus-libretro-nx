@@ -222,7 +222,9 @@ static void main_check_inputs(void)
 #ifdef WITH_LIRC
     lircCheckInput();
 #endif
+#ifdef HAVE_GLIDEN64
     if(!(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer))
+#endif
     {
         // Input Polling will be forced to early if Threaded GLideN64
         poll_cb();
@@ -232,10 +234,14 @@ static void main_check_inputs(void)
 /*********************************************************************************************************
 * global functions, for adjusting the core emulator behavior
 */
+#ifdef HAVE_GLIDEN64
 extern void Config_LoadConfig();
+#endif
 int main_set_core_defaults(void)
 {
+#ifdef HAVE_GLIDEN64
     Config_LoadConfig();
+#endif
     return 1;
 }
 
@@ -1640,8 +1646,10 @@ m64p_error main_run(void)
      */
     extern cothread_t retro_thread;
 
+#ifdef HAVE_GLIDEN64
     // For GLN64 Threaded GL we just sanely return, exit sync is handled elsewhere
     if(!(current_rdp_type == RDP_PLUGIN_GLIDEN64 && EnableThreadedRenderer))
+#endif
     {
         co_switch(retro_thread);
     }

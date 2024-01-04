@@ -4,6 +4,7 @@ FORCE_GLES3 ?= 0
 LLE ?= 0
 HAVE_PARALLEL_RSP ?= 0
 HAVE_PARALLEL_RDP ?= 0
+HAVE_GLIDEN64 ?= 1
 
 SYSTEM_MINIZIP ?= 0
 SYSTEM_LIBPNG ?= 0
@@ -93,14 +94,16 @@ ifneq (,$(findstring unix,$(platform)))
    TARGET := $(TARGET_NAME)_libretro.so
    LDFLAGS += -shared -Wl,--version-script=$(LIBRETRO_DIR)/link.T -Wl,--no-undefined
 
-   ifeq ($(FORCE_GLES),1)
-      GLES = 1
-      GL_LIB := -lGLESv2
-   else ifeq ($(FORCE_GLES3),1)
-      GLES3 = 1
-      GL_LIB := -lGLESv2
-   else
-      GL_LIB := -lGL
+   ifeq ($(HAVE_GLIDEN64),1)
+      ifeq ($(FORCE_GLES),1)
+         GLES = 1
+         GL_LIB := -lGLESv2
+      else ifeq ($(FORCE_GLES3),1)
+         GLES3 = 1
+         GL_LIB := -lGLESv2
+      else
+         GL_LIB := -lGL
+      endif
    endif
 
    COREFLAGS += -DOS_LINUX
@@ -599,6 +602,9 @@ endif
 
 ifeq ($(LLE), 1)
    COREFLAGS += -DHAVE_LLE
+endif
+ifeq ($(HAVE_GLIDEN64), 1)
+   COREFLAGS += -DHAVE_GLIDEN64
 endif
 
 COREFLAGS += -D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS -D__LIBRETRO__ -DUSE_FILE32API -DM64P_PLUGIN_API -DM64P_CORE_PROTOTYPES -D_ENDUSER_RELEASE -DSINC_LOWER_QUALITY -DTXFILTER_LIB -D__VEC4_OPT -DMUPENPLUSAPI

@@ -20,14 +20,18 @@ INCFLAGS += \
 	-I$(ROOT_DIR)/custom/mupen64plus-core \
 	-I$(ROOT_DIR)/custom/android/include \
 	-I$(ROOT_DIR)/custom/GLideN64 \
-	-I$(VIDEODIR_GLIDEN64)/src \
-	-I$(VIDEODIR_GLIDEN64)/src/osal \
 	-I$(CORE_DIR)/src \
 	-I$(CORE_DIR)/src/api \
 	-I$(AUDIO_LIBRETRO_DIR) \
 	-I$(LIBRETRO_COMM_DIR)/include \
 	-I$(LIBRETRO_DIR) \
-	-I$(VIDEODIR_GLIDEN64)/src/inc
+	-I$(VIDEODIR_GLIDEN64)/src/osal
+
+ifeq ($(HAVE_GLIDEN64), 1)
+	INCFLAGS += \
+		-I$(VIDEODIR_GLIDEN64)/src \
+		-I$(VIDEODIR_GLIDEN64)/src/inc
+endif
 
 MINIZIP_INCFLAGS = -I$(MINIZIP_DIR)
 LIBPNG_INCFLAGS  = -I$(LIBPNG_DIR)
@@ -257,10 +261,14 @@ SOURCES_C += $(LIBRETRO_DIR)/libretro.c \
 	$(LIBRETRO_COMM_DIR)/vfs/vfs_implementation.c \
 	$(LIBRETRO_COMM_DIR)/streams/file_stream.c \
 	$(LIBRETRO_COMM_DIR)/compat/fopen_utf8.c \
-	$(ROOT_DIR)/custom/mupen64plus-core/api/vidext_libretro.c \
-	$(LIBRETRO_COMM_DIR)/glsm/glsm.c
+	$(ROOT_DIR)/custom/mupen64plus-core/api/vidext_libretro.c
+
+ifeq ($(HAVE_GLIDEN64), 1)
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsm/glsm.c
+endif
 
 
+ifeq ($(HAVE_GLIDEN64), 1)
 SOURCES_CXX   += \
 	$(VIDEODIR_GLIDEN64)/src/Combiner.cpp                                                         \
     $(VIDEODIR_GLIDEN64)/src/CombinerKey.cpp                                                      \
@@ -391,6 +399,7 @@ SOURCES_CXX   += \
 	$(VIDEODIR_GLIDEN64)/src/GLideNHQ/TxTexCache.cpp \
 	$(VIDEODIR_GLIDEN64)/src/GLideNHQ/TxUtil.cpp \
 	$(VIDEODIR_GLIDEN64)/src/RSP_LoadMatrix.cpp
+endif
 
 ifeq ($(HAVE_THR_AL), 1)
 CFLAGS      += -DHAVE_THR_AL
@@ -468,53 +477,61 @@ endif
 
 SOURCES_C += $(LIBRETRO_COMM_DIR)/libco/libco.c
 
-ifeq ($(platform), $(filter $(platform), rpi3 rpi4 libnx jetson-xavier))
-	SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/CRC32_ARMV8.cpp
-else
-	SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/CRC_OPT.cpp
+ifeq ($(HAVE_GLIDEN64), 1)
+	ifeq ($(platform), $(filter $(platform), rpi3 rpi4 libnx jetson-xavier))
+		SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/CRC32_ARMV8.cpp
+	else
+		SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/CRC_OPT.cpp
+	endif
 endif
 
 ifeq ($(HAVE_NEON),1)
-	SOURCES_CXX   += $(VIDEODIR_GLIDEN64)/src/Neon/3DMathNeon.cpp \
-						  $(VIDEODIR_GLIDEN64)/src/Neon/gSPNeon.cpp
+	ifeq ($(HAVE_GLIDEN64), 1)
+		SOURCES_CXX   += $(VIDEODIR_GLIDEN64)/src/Neon/3DMathNeon.cpp \
+							$(VIDEODIR_GLIDEN64)/src/Neon/gSPNeon.cpp
+	endif
 
 	SOURCES_ASM += $(LIBRETRO_COMM_DIR)/audio/conversion/float_to_s16_neon.S \
 						$(LIBRETRO_COMM_DIR)/audio/conversion/s16_to_float_neon.S \
 						$(LIBRETRO_COMM_DIR)/audio/resampler/drivers/sinc_resampler_neon.S
 else
-	SOURCES_CXX   += $(VIDEODIR_GLIDEN64)/src/3DMath.cpp
+	ifeq ($(HAVE_GLIDEN64), 1)
+		SOURCES_CXX   += $(VIDEODIR_GLIDEN64)/src/3DMath.cpp
+	endif
 endif
 
-ifneq ($(platform), $(filter $(platform), ios-arm64 tvos-arm64))
-	EGL_LIB ?= -lEGL
-endif
+ifeq ($(HAVE_GLIDEN64), 1)
+	ifneq ($(platform), $(filter $(platform), ios-arm64 tvos-arm64))
+		EGL_LIB ?= -lEGL
+	endif
 
-ifeq ($(GLES3),1)
-	ifeq ($(platform), $(filter $(platform), ios-arm64 tvos-arm64))
-		GLFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DGLES3
+	ifeq ($(GLES3),1)
+		ifeq ($(platform), $(filter $(platform), ios-arm64 tvos-arm64))
+			GLFLAGS += -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DGLES3
+		else
+			GLFLAGS += -DEGL -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DGLES3
+		endif
+		LDFLAGS += $(EGL_LIB)
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
+		ifeq ($(ANDROID),1)
+			SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/GraphicBufferWrapper.cpp \
+				$(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/PublicApi/android_hardware_buffer_compat.cpp
+		endif
+	else ifeq ($(GLES),1)
+		GLFLAGS += -DEGL -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DGLES2
+		LDFLAGS += $(EGL_LIB)
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c
+
+		ifeq ($(ANDROID),1)
+			SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/GraphicBufferWrapper.cpp \
+				$(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/PublicApi/android_hardware_buffer_compat.cpp
+		endif
 	else
-		GLFLAGS += -DEGL -DHAVE_OPENGLES -DHAVE_OPENGLES3 -DGLES3
+		ifeq (,$(findstring win,$(platform)))
+			GLFLAGS += -DCORE
+		endif
+		GLFLAGS += -DHAVE_OPENGL
+		SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
 	endif
-	LDFLAGS += $(EGL_LIB)
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es3.c
-	ifeq ($(ANDROID),1)
-		SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/GraphicBufferWrapper.cpp \
-		               $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/PublicApi/android_hardware_buffer_compat.cpp
-	endif
-else ifeq ($(GLES),1)
-	GLFLAGS += -DEGL -DHAVE_OPENGLES -DHAVE_OPENGLES2 -DGLES2
-	LDFLAGS += $(EGL_LIB)
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_es2.c
-
-	ifeq ($(ANDROID),1)
-		SOURCES_CXX += $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/GraphicBufferWrapper.cpp \
-		               $(VIDEODIR_GLIDEN64)/src/Graphics/OpenGLContext/GraphicBuffer/PublicApi/android_hardware_buffer_compat.cpp
-	endif
-else				   
-	ifeq (,$(findstring win,$(platform)))
-		GLFLAGS += -DCORE
-	endif
-	GLFLAGS += -DHAVE_OPENGL
-	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/glsym_gl.c
+	SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c
 endif
-SOURCES_C += $(LIBRETRO_COMM_DIR)/glsym/rglgen.c

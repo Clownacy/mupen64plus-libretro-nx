@@ -36,19 +36,22 @@ struct N64Regs
 	u32 *SP_STATUS;
 };
 
-extern N64Regs REG;
-extern u8 *HEADER;
-
-extern "C" {
-	// See comment in N64.cpp
+/*
+    DMEM and IMEM conflict with CXD4 with GCC 10.x
+    Since GLideN64 is written in C++, we can just shove these into a namespace.
+*/
+namespace GLideN64_N64
+{
+	extern N64Regs REG;
+	extern u8 *HEADER;
 	extern u8 *DMEM;
 	extern u8 *IMEM;
+	extern u8 *RDRAM;
+	extern u64 TMEM[512];
+	extern u32 RDRAMSize;
+	extern bool ConfigOpen;
 }
 
-extern u8 *RDRAM;
-extern u64 TMEM[512];
-extern u32 RDRAMSize;
-extern bool ConfigOpen;
-
+using namespace GLideN64_N64;
 #endif
 
