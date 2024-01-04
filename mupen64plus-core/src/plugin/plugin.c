@@ -180,7 +180,9 @@ static void EmptyFunc(void)
     }
 
 // Define RSP Interfaces
+#ifdef HAVE_HLE_RSP
 DEFINE_RSP(hle);
+#endif
 
 #ifdef HAVE_PARALLEL_RSP
 DEFINE_RSP(parallelRSP);
@@ -453,7 +455,9 @@ void plugin_connect_all()
     switch (current_rsp_type)
     {
       case RSP_PLUGIN_HLE:
+#ifdef HAVE_HLE_RSP
          rsp = rsp_hle;
+#endif
          break;
       case RSP_PLUGIN_CXD4:
 #ifdef HAVE_LLE

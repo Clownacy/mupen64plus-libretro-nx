@@ -410,21 +410,23 @@ SOURCES_C   += $(VIDEODIR_ANGRYLION)/interface.c \
 				   $(VIDEODIR_ANGRYLION)/n64video.c
 endif
 
-SOURCES_C += \
-	$(RSPDIR)/src/alist.c \
-	$(RSPDIR)/src/alist_audio.c \
-	$(RSPDIR)/src/alist_naudio.c \
-	$(RSPDIR)/src/alist_nead.c \
-	$(RSPDIR)/src/audio.c \
-	$(RSPDIR)/src/cicx105.c \
-	$(RSPDIR)/src/hle.c \
-	$(RSPDIR)/src/hvqm.c \
-	$(RSPDIR)/src/jpeg.c \
-	$(RSPDIR)/src/memory.c \
-	$(RSPDIR)/src/mp3.c \
-	$(RSPDIR)/src/musyx.c \
-	$(RSPDIR)/src/re2.c \
-	$(RSPDIR)/src/plugin.c
+ifeq ($(HAVE_HLE_RSP), 1)
+	SOURCES_C += \
+		$(RSPDIR)/src/alist.c \
+		$(RSPDIR)/src/alist_audio.c \
+		$(RSPDIR)/src/alist_naudio.c \
+		$(RSPDIR)/src/alist_nead.c \
+		$(RSPDIR)/src/audio.c \
+		$(RSPDIR)/src/cicx105.c \
+		$(RSPDIR)/src/hle.c \
+		$(RSPDIR)/src/hvqm.c \
+		$(RSPDIR)/src/jpeg.c \
+		$(RSPDIR)/src/memory.c \
+		$(RSPDIR)/src/mp3.c \
+		$(RSPDIR)/src/musyx.c \
+		$(RSPDIR)/src/re2.c \
+		$(RSPDIR)/src/plugin.c
+endif
 
 ifeq ($(LLE), 1)
 	SOURCES_C += $(CXD4DIR)/rsp.c

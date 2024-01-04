@@ -1395,7 +1395,9 @@ struct retro_core_option_v2_definition option_defs_us[] = {
 #ifdef HAVE_PARALLEL_RSP
             {"parallel", "ParaLLEl"},
 #endif
+#ifdef HAVE_HLE_RSP
             {"hle", "HLE"},
+#endif
             { NULL, NULL },
         },
         "hle"
