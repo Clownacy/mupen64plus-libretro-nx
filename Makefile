@@ -213,6 +213,25 @@ else ifeq ($(platform), libnx)
    WITH_DYNAREC = aarch64
    STATIC_LINKING = 1
 
+# Nintendo Wii U
+else ifeq ($(platform), wiiu)
+   include $(DEVKITPRO)/wut/share/wut_rules
+   EGL := 0
+   PIC = 0 # TODO: ?
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CPUOPTS := $(MACHDEP)
+   PLATCFLAGS = -DNO_ASM -D__WIIU__ -D__WUT__ -ffunction-sections -I$(WUT_ROOT)/include $(RPXSPECS)
+   CXXFLAGS +=
+   # TODO: Have M64P_BIG_ENDIAN be automatically set with libretro_endianness.h so that it doesn't need to be manually defined here?
+   COREFLAGS += -DM64P_BIG_ENDIAN -DOS_LINUX -DLIBCO_PPC_ASM -DUSE_SDL $(shell powerpc-eabi-pkg-config --cflags sdl2)
+   GLES = 0 # TODO
+   STATIC_LINKING = 1
+   WITH_DYNAREC =
+   LLE = 1
+   HAVE_THR_AL = 1
+   HAVE_GLIDEN64 = 0
+   HAVE_HLE_RSP = 0
+
 # Jetson Xavier NX
 else ifeq ($(platform), jetson-xavier)
    TARGET := $(TARGET_NAME)_libretro.so
