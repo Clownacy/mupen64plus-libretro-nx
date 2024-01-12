@@ -178,9 +178,17 @@ void savestates_set_job(savestates_job j, savestates_type t, const char *fn)
     if (fn != NULL)
         fname = strdup(fn);
 #else
+#ifdef USE_SDL
+    SDL_LockMutex(savestates_lock);
+#else
     pthread_mutex_lock(&savestates_lock);
+#endif
     fname = (char*)fn;
+#ifdef USE_SDL
+    SDL_UnlockMutex(savestates_lock);
+#else
     pthread_mutex_unlock(&savestates_lock);
+#endif
 #endif // __LIBRETRO__
 }
 
