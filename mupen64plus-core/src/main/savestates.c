@@ -76,8 +76,12 @@ static unsigned int slot = 0;
 static int autoinc_save_slot = 0;
 
 #ifdef USE_SDL
+#define LOCK_MUTEX SDL_LockMutex(savestates_lock)
+#define UNLOCK_MUTEX SDL_UnlockMutex(savestates_lock)
 static SDL_mutex *savestates_lock;
 #else
+#define LOCK_MUTEX pthread_mutex_lock(&savestates_lock)
+#define UNLOCK_MUTEX pthread_mutex_unlock(&savestates_lock)
 static pthread_mutex_t savestates_lock;
 #endif
 
@@ -178,17 +182,9 @@ void savestates_set_job(savestates_job j, savestates_type t, const char *fn)
     if (fn != NULL)
         fname = strdup(fn);
 #else
-#ifdef USE_SDL
-    SDL_LockMutex(savestates_lock);
-#else
-    pthread_mutex_lock(&savestates_lock);
-#endif
+    LOCK_MUTEX;
     fname = (char*)fn;
-#ifdef USE_SDL
-    SDL_UnlockMutex(savestates_lock);
-#else
-    pthread_mutex_unlock(&savestates_lock);
-#endif
+    UNLOCK_MUTEX;
 #endif // __LIBRETRO__
 }
 
@@ -231,11 +227,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
 
     uint32_t* cp0_regs = r4300_cp0_regs(&dev->r4300.cp0);
 
-#ifdef USE_SDL
-    SDL_LockMutex(savestates_lock);
-#else
-    pthread_mutex_lock(&savestates_lock);
-#endif
+    LOCK_MUTEX;
 
 #ifndef __LIBRETRO__
     gzFile f;
@@ -243,9 +235,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
     if(f==NULL)
     {
         main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not open state file: %s", filepath);
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
 
@@ -254,9 +244,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
     {
         main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not read header from state file %s", filepath);
         gzclose(f);
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
     curr = header;
@@ -265,9 +253,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
     {
         main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "State file: %s is not a valid Mupen64plus savestate.", filepath);
         gzclose(f);
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
 #else
@@ -292,11 +278,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
 #ifndef __LIBRETRO__
         gzclose(f);
 #endif
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#else
-        pthread_mutex_unlock(&savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
 
@@ -306,11 +288,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
 #ifndef __LIBRETRO__
         gzclose(f);
 #endif
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#else
-        pthread_mutex_unlock(&savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
     curr += 32;
@@ -324,11 +302,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
 #ifndef __LIBRETRO__
         gzclose(f);
 #endif
-#ifdef USE_SDL
-        SDL_UnlockMutex(savestates_lock);
-#else
-        pthread_mutex_unlock(&savestates_lock);
-#endif
+        UNLOCK_MUTEX;
         return 0;
     }
     if (version == 0x00010000) /* original savestate version */
@@ -340,9 +314,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
             main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not read Mupen64Plus savestate 1.0 data from %s", filepath);
             free(savestateData);
             gzclose(f);
-#ifdef USE_SDL
-            SDL_UnlockMutex(savestates_lock);
-#endif
+            UNLOCK_MUTEX;
             return 0;
         }
 #else
@@ -360,9 +332,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
             main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not read Mupen64Plus savestate 1.1 data from %s", filepath);
             free(savestateData);
             gzclose(f);
-#ifdef USE_SDL
-            SDL_UnlockMutex(savestates_lock);
-#endif
+            UNLOCK_MUTEX;
             return 0;
         }
 #else
@@ -382,9 +352,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
             main_message(M64MSG_STATUS, OSD_BOTTOM_LEFT, "Could not read Mupen64Plus savestate 1.2+ data from %s", filepath);
             free(savestateData);
             gzclose(f);
-#ifdef USE_SDL
-            SDL_UnlockMutex(savestates_lock);
-#endif
+            UNLOCK_MUTEX;
             return 0;
         }
 #else
@@ -398,11 +366,7 @@ int savestates_load_m64p(struct device* dev, const void *data)
 #ifndef __LIBRETRO__
     gzclose(f);
 #endif
-#ifdef USE_SDL
-    SDL_UnlockMutex(savestates_lock);
-#else
-    pthread_mutex_unlock(&savestates_lock);
-#endif
+    UNLOCK_MUTEX;
 
     // Parse savestate
     dev->rdram.regs[0][RDRAM_CONFIG_REG]       = GETDATA(curr, uint32_t);
@@ -1588,11 +1552,7 @@ static void savestates_save_m64p_work(struct work_struct *work)
 {
     struct savestate_work *save = container_of(work, struct savestate_work, work);
 
-#ifdef USE_SDL
-    SDL_LockMutex(savestates_lock);
-#else
-    pthread_mutex_lock(&savestates_lock);
-#endif
+    LOCK_MUTEX;
 
 #ifndef __LIBRETRO__
     // Write the state to a GZIP file
@@ -1627,11 +1587,7 @@ static void savestates_save_m64p_work(struct work_struct *work)
 #endif
     free(save);
 
-#ifdef USE_SDL
-    SDL_UnlockMutex(savestates_lock);
-#else
-    pthread_mutex_unlock(&savestates_lock);
-#endif
+    UNLOCK_MUTEX;
 }
 
 #ifndef __LIBRETRO__
