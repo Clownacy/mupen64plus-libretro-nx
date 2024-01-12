@@ -5,12 +5,21 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "retro_endianness.h"
+
 struct rgba
 {
+#ifdef MSB_FIRST
+    uint8_t a;
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+#else
     uint8_t b;
     uint8_t g;
     uint8_t r;
     uint8_t a;
+#endif
 };
 
 struct frame_buffer
