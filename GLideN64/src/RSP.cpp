@@ -17,6 +17,7 @@
 #include "Config.h"
 #include "TextureFilterHandler.h"
 #include "DisplayWindow.h"
+#include "Endian.h"
 
 using namespace std;
 
@@ -276,7 +277,7 @@ void RSP_Init()
 	// get the name of the ROM
 	char romname[21];
 	for (int i = 0; i < 20; ++i)
-		romname[i] = HEADER[(32 + i) ^ 3];
+		romname[i] = HEADER[(32 + i) ^ ENDIAN_XOR_3];
 	romname[20] = 0;
 
 	// remove all trailing spaces

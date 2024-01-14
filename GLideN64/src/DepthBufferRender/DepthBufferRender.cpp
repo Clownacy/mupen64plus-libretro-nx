@@ -20,6 +20,7 @@
 #include "FrameBuffer.h"
 #include "DepthBuffer.h"
 #include "DepthBufferRender.h"
+#include "Endian.h"
 
 static vertexi * max_vtx;                   // Max y vertex (ending vertex)
 static vertexi * start_vtx, *end_vtx;      // First and last vertex in array
@@ -231,7 +232,7 @@ void Rasterize(vertexi * vtx, int vertices, int dzdx)
 				if (trueZ < 0)
 					trueZ = 0;
 				u16 encodedZ = zLUT[trueZ];
-				int idx = (shift + x) ^ 1;
+				int idx = (shift + x) ^ ENDIAN_XOR_1;
 				if (encodedZ < destptr[idx])
 					destptr[idx] = encodedZ;
 				z = isumm(z, dzdx);

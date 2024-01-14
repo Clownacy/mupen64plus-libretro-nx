@@ -22,6 +22,7 @@
 #include "Performance.h"
 #include "DisplayWindow.h"
 #include <Graphics/Context.h>
+#include "Endian.h"
 
 using namespace std;
 
@@ -196,7 +197,7 @@ void gDPSetTextureImage(u32 format, u32 size, u32 width, u32 address)
 	if (gSP.DMAOffsets.tex_offset != 0) {
 		if (format == G_IM_FMT_RGBA) {
 			u16 * t = reinterpret_cast<u16*>(RDRAM + gSP.DMAOffsets.tex_offset);
-			gSP.DMAOffsets.tex_shift = t[gSP.DMAOffsets.tex_count ^ 1];
+			gSP.DMAOffsets.tex_shift = t[gSP.DMAOffsets.tex_count ^ ENDIAN_XOR_1];
 			gDP.textureImage.address += gSP.DMAOffsets.tex_shift;
 		} else {
 			gSP.DMAOffsets.tex_offset = 0;
@@ -745,7 +746,7 @@ void gDPLoadTLUT( u32 tile, u32 uls, u32 ult, u32 lrs, u32 lrt )
 	int i = 0;
 	while (i < count) {
 		for (u16 j = 0; (j < 16) && (i < count); ++j, ++i) {
-			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ 2)));
+			dest[(destIdx | 0x0400) & 0x07FF] = swapword(*reinterpret_cast<u16*>(RDRAM + (address ^ ENDIAN_XOR_2)));
 			address += 2;
 			destIdx += 4;
 		}

@@ -17,6 +17,7 @@
 #include <Graphics/ColorBufferReader.h>
 #include <DisplayWindow.h>
 #include "BlueNoiseTexture.h"
+#include "Endian.h"
 
 using namespace graphics;
 
@@ -277,7 +278,7 @@ void copyWhiteToRDRAM(FrameBuffer * _pBuffer)
 
 		for (u32 y = 0; y < VI.height; ++y) {
 			for (u32 x = 0; x < VI.width; ++x) {
-				ptr_dst[(x + y*VI.width) ^ 1] = 0xFFFF;
+				ptr_dst[(x + y*VI.width) ^ ENDIAN_XOR_1] = 0xFFFF;
 			}
 		}
 	}

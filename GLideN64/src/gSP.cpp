@@ -18,6 +18,7 @@
 #include "Config.h"
 #include "Log.h"
 #include "DisplayWindow.h"
+#include "Endian.h"
 
 using namespace std;
 using namespace graphics;
@@ -258,14 +259,14 @@ void gSPViewport( u32 v )
 		return;
 	}
 
-	gSP.viewport.vscale[0] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  2], 2 );
-	gSP.viewport.vscale[1] = _FIXED2FLOAT( *(s16*)&RDRAM[address     ], 2 );
-	gSP.viewport.vscale[2] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  6], 10 );// * 0.00097847357f;
-	gSP.viewport.vscale[3] = *(s16*)&RDRAM[address +  4];
-	gSP.viewport.vtrans[0] = _FIXED2FLOAT( *(s16*)&RDRAM[address + 10], 2 );
-	gSP.viewport.vtrans[1] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  8], 2 );
-	gSP.viewport.vtrans[2] = _FIXED2FLOAT( *(s16*)&RDRAM[address + 14], 10 );// * 0.00097847357f;
-	gSP.viewport.vtrans[3] = *(s16*)&RDRAM[address + 12];
+	gSP.viewport.vscale[0] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  0 ^ ENDIAN_XOR_2], 2 );
+	gSP.viewport.vscale[1] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  2 ^ ENDIAN_XOR_2], 2 );
+	gSP.viewport.vscale[2] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  4 ^ ENDIAN_XOR_2], 10 );// * 0.00097847357f;
+	gSP.viewport.vscale[3] =               *(s16*)&RDRAM[address +  6 ^ ENDIAN_XOR_2];
+	gSP.viewport.vtrans[0] = _FIXED2FLOAT( *(s16*)&RDRAM[address +  8 ^ ENDIAN_XOR_2], 2 );
+	gSP.viewport.vtrans[1] = _FIXED2FLOAT( *(s16*)&RDRAM[address + 10 ^ ENDIAN_XOR_2], 2 );
+	gSP.viewport.vtrans[2] = _FIXED2FLOAT( *(s16*)&RDRAM[address + 12 ^ ENDIAN_XOR_2], 10 );// * 0.00097847357f;
+	gSP.viewport.vtrans[3] =               *(s16*)&RDRAM[address + 14 ^ ENDIAN_XOR_2];
 
 	if (gSP.viewport.vscale[1] < 0.0f && !GBI.isNegativeY())
 		gSP.viewport.vscale[1] = -gSP.viewport.vscale[1];
@@ -328,12 +329,12 @@ void gSPLight( u32 l, s32 n )
 
 		Normalize( gSP.lights.xyz[n] );
 		u32 addrShort = addrByte >> 1;
-		gSP.lights.pos_xyzw[n][X] = (float)(((short*)RDRAM)[(addrShort+4)^1]);
-		gSP.lights.pos_xyzw[n][Y] = (float)(((short*)RDRAM)[(addrShort+5)^1]);
-		gSP.lights.pos_xyzw[n][Z] = (float)(((short*)RDRAM)[(addrShort+6)^1]);
-		gSP.lights.ca[n] = (float)(RDRAM[(addrByte +  3) ^ 3]);
-		gSP.lights.la[n] = (float)(RDRAM[(addrByte +  7) ^ 3]);
-		gSP.lights.qa[n] = (float)(RDRAM[(addrByte + 14) ^ 3]);
+		gSP.lights.pos_xyzw[n][X] = (float)(((short*)RDRAM)[(addrShort+4)^ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Y] = (float)(((short*)RDRAM)[(addrShort+5)^ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Z] = (float)(((short*)RDRAM)[(addrShort+6)^ENDIAN_XOR_1]);
+		gSP.lights.ca[n] = (float)(RDRAM[(addrByte +  3) ^ ENDIAN_XOR_3]);
+		gSP.lights.la[n] = (float)(RDRAM[(addrByte +  7) ^ ENDIAN_XOR_3]);
+		gSP.lights.qa[n] = (float)(RDRAM[(addrByte + 14) ^ ENDIAN_XOR_3]);
 	}
 
 	gSP.changed |= CHANGED_LIGHT;
@@ -372,11 +373,11 @@ void gSPLightCBFD( u32 l, s32 n )
 
 		Normalize( gSP.lights.xyz[n] );
 		u32 addrShort = addrByte >> 1;
-		gSP.lights.pos_xyzw[n][X] = (float)(((short*)RDRAM)[(addrShort+16)^1]);
-		gSP.lights.pos_xyzw[n][Y] = (float)(((short*)RDRAM)[(addrShort+17)^1]);
-		gSP.lights.pos_xyzw[n][Z] = (float)(((short*)RDRAM)[(addrShort+18)^1]);
-		gSP.lights.pos_xyzw[n][W] = (float)(((short*)RDRAM)[(addrShort+19)^1]);
-		gSP.lights.ca[n] = (float)(RDRAM[(addrByte + 12) ^ 3]) / 16.0f;
+		gSP.lights.pos_xyzw[n][X] = (float)(((short*)RDRAM)[(addrShort+16)^ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Y] = (float)(((short*)RDRAM)[(addrShort+17)^ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Z] = (float)(((short*)RDRAM)[(addrShort+18)^ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][W] = (float)(((short*)RDRAM)[(addrShort+19)^ENDIAN_XOR_1]);
+		gSP.lights.ca[n] = (float)(RDRAM[(addrByte + 12) ^ ENDIAN_XOR_3]) / 16.0f;
 	}
 
 	gSP.changed |= CHANGED_LIGHT;
@@ -394,15 +395,15 @@ void gSPLightAcclaim(u32 l, s32 n)
 
 	if (n < 10) {
 		const u32 addrShort = addrByte >> 1;
-		gSP.lights.pos_xyzw[n][X] = (f32)(((s16*)RDRAM)[(addrShort + 0) ^ 1]);
-		gSP.lights.pos_xyzw[n][Y] = (f32)(((s16*)RDRAM)[(addrShort + 1) ^ 1]);
-		gSP.lights.pos_xyzw[n][Z] = (f32)(((s16*)RDRAM)[(addrShort + 2) ^ 1]);
-		gSP.lights.ca[n] = (f32)(((s16*)RDRAM)[(addrShort + 5) ^ 1]);
-		gSP.lights.la[n] = _FIXED2FLOAT((((u16*)RDRAM)[(addrShort + 6) ^ 1]), 16);
-		gSP.lights.qa[n] = (f32)(((u16*)RDRAM)[(addrShort + 7) ^ 1]);
-		gSP.lights.rgb[n][R] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 6) ^ 3]), 8);
-		gSP.lights.rgb[n][G] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 7) ^ 3]), 8);
-		gSP.lights.rgb[n][B] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 8) ^ 3]), 8);
+		gSP.lights.pos_xyzw[n][X] = (f32)(((s16*)RDRAM)[(addrShort + 0) ^ ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Y] = (f32)(((s16*)RDRAM)[(addrShort + 1) ^ ENDIAN_XOR_1]);
+		gSP.lights.pos_xyzw[n][Z] = (f32)(((s16*)RDRAM)[(addrShort + 2) ^ ENDIAN_XOR_1]);
+		gSP.lights.ca[n] =         (f32)(((s16*)RDRAM)[(addrShort + 5) ^ ENDIAN_XOR_1]);
+		gSP.lights.la[n] = _FIXED2FLOAT((((u16*)RDRAM)[(addrShort + 6) ^ ENDIAN_XOR_1]), 16);
+		gSP.lights.qa[n] =         (f32)(((u16*)RDRAM)[(addrShort + 7) ^ ENDIAN_XOR_1]);
+		gSP.lights.rgb[n][R] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 6) ^ ENDIAN_XOR_3]), 8);
+		gSP.lights.rgb[n][G] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 7) ^ ENDIAN_XOR_3]), 8);
+		gSP.lights.rgb[n][B] = _FIXED2FLOATCOLOR((RDRAM[(addrByte + 8) ^ ENDIAN_XOR_3]), 8);
 		gSP.lights.rgb2[n][R] = gSP.lights.rgb[n][R];
 		gSP.lights.rgb2[n][G] = gSP.lights.rgb[n][G];
 		gSP.lights.rgb2[n][B] = gSP.lights.rgb[n][B];
@@ -867,7 +868,7 @@ void gSPProcessVertex(u32 v, SPVertex * spVtx)
 					SPVertex & vtx = spVtx[v+i];
 					const f32 intensity = DotProduct(gSP.lookat.i_xyz[0], &vtx.nx) * 128.0f;
 					const s16 index = static_cast<s16>(intensity);
-					vtx.a = _FIXED2FLOATCOLOR(RDRAM[(gSP.DMAIO_address + 128 + index) ^ 3], 8);
+					vtx.a = _FIXED2FLOATCOLOR(RDRAM[(gSP.DMAIO_address + 128 + index) ^ ENDIAN_XOR_3], 8);
 				}
 			}
 		}
@@ -1031,14 +1032,14 @@ u32 gSPLoadDMAVertexData(u32 address, SPVertex * spVtx, u32 v0, u32 vi, u32 n)
 	for (; vi < end; vi += VNUM) {
 		for(u32 j = 0; j < VNUM; ++j) {
 			SPVertex & vtx = spVtx[vi+j];
-			vtx.x = *(s16*)&RDRAM[address ^ 2];
-			vtx.y = *(s16*)&RDRAM[(address + 2) ^ 2];
-			vtx.z = *(s16*)&RDRAM[(address + 4) ^ 2];
+			vtx.x = *(s16*)&RDRAM[(address + 0) ^ ENDIAN_XOR_2];
+			vtx.y = *(s16*)&RDRAM[(address + 2) ^ ENDIAN_XOR_2];
+			vtx.z = *(s16*)&RDRAM[(address + 4) ^ ENDIAN_XOR_2];
 
-			vtx.r = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 6) ^ 3]), 8);
-			vtx.g = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 7) ^ 3]), 8);
-			vtx.b = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 8) ^ 3]), 8);
-			vtx.a = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 9) ^ 3]), 8);
+			vtx.r = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 6) ^ ENDIAN_XOR_3]), 8);
+			vtx.g = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 7) ^ ENDIAN_XOR_3]), 8);
+			vtx.b = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 8) ^ ENDIAN_XOR_3]), 8);
+			vtx.a = _FIXED2FLOATCOLOR((*(u8*)&RDRAM[(address + 9) ^ ENDIAN_XOR_3]), 8);
 
 			address += 10;
 		}
@@ -1083,8 +1084,8 @@ u32 gSPLoadCBFDVertexData(const Vertex *orgVtx, SPVertex * spVtx, u32 v0, u32 vi
 			vtx.flag = orgVtx->flag;
 			if (gSP.geometryMode & G_LIGHTING) {
 				const u32 normaleAddrOffset = ((vi+j)<<1);
-				vtx.nx = _FIXED2FLOATCOLOR(((s8*)RDRAM)[(gSP.cbfd.vertexNormalBase + normaleAddrOffset + 0) ^ 3], 7);
-				vtx.ny = _FIXED2FLOATCOLOR(((s8*)RDRAM)[(gSP.cbfd.vertexNormalBase + normaleAddrOffset + 1) ^ 3], 7);
+				vtx.nx = _FIXED2FLOATCOLOR(((s8*)RDRAM)[(gSP.cbfd.vertexNormalBase + normaleAddrOffset + 0) ^ ENDIAN_XOR_3], 7);
+				vtx.ny = _FIXED2FLOATCOLOR(((s8*)RDRAM)[(gSP.cbfd.vertexNormalBase + normaleAddrOffset + 1) ^ ENDIAN_XOR_3], 7);
 				vtx.nz = _FIXED2FLOATCOLOR((s8)(orgVtx->flag & 0xFF), 7);
 			}
 			vtx.r = _FIXED2FLOATCOLOR(orgVtx->color.r, 8);
@@ -1613,13 +1614,13 @@ void gSPInsertMatrix( u32 where, u32 num )
 	for (u32 i = 0; i < 2; i++) {
 		if (addr < 0x20) {
 			// integer elements of the matrix to be changed
-			const s16 integer = static_cast<s16>(pData[i ^ 1]);
+			const s16 integer = static_cast<s16>(pData[i ^ ENDIAN_XOR_1]);
 			const u16 fract = GetIntMatrixElement(pMtx[index + i]).second;
 			pMtx[index + i] = GetFloatMatrixElement(integer, fract);
 		} else {
 			// fractional elements of the matrix to be changed
 			const s16 integer = GetIntMatrixElement(pMtx[index + i]).first;
-			const u16 fract = pData[i ^ 1];
+			const u16 fract = pData[i ^ ENDIAN_XOR_1];
 			pMtx[index + i] = GetFloatMatrixElement(integer, fract);
 		}
 	}
