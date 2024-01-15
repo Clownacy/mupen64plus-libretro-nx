@@ -6,6 +6,7 @@
 #include "DepthBufferToRDRAM.h"
 #include "WriteToRDRAM.h"
 #include "MemoryStatus.h"
+#include "Endian.h"
 
 #include <FrameBuffer.h>
 #include <DepthBuffer.h>

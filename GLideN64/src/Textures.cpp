@@ -20,6 +20,7 @@
 #include "Graphics/Context.h"
 #include "Graphics/Parameters.h"
 #include "DisplayWindow.h"
+#include "Endian.h"
 #include <mupen64plus-next_common.h>
 
 using namespace std;

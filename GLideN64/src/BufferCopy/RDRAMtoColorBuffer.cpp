@@ -1,5 +1,7 @@
 #include "RDRAMtoColorBuffer.h"
 
+#include "Endian.h"
+
 #include <FrameBufferInfo.h>
 #include <FrameBuffer.h>
 #include <Combiner.h>
