@@ -256,7 +256,7 @@ bool DepthBufferToRDRAM::_copy(u32 _startAddress, u32 _endAddress)
 						   ptr_dst,
 						   &DepthBufferToRDRAM::_FloatToUInt16,
 						   dummyTester<f32>,
-						   1,
+						   ENDIAN_XOR_1,
 						   width,
 						   height,
 						   numPixels,

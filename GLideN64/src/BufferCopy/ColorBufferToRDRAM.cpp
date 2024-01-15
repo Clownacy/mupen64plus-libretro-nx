@@ -218,11 +218,11 @@ void ColorBufferToRDRAM::_copy(u32 _startAddress, u32 _endAddress, bool _sync)
 		if ((config.generalEmulation.hacks & hack_subscreen) != 0u && height == 1u)
 			copyWhiteToRDRAM(m_pCurFrameBuffer);
 		else
-			writeToRdram<u32, u16>(ptr_src, ptr_dst, &ColorBufferToRDRAM::_RGBAtoRGBA16, dummyTester<u32>, 1, width, height, numPixels, _startAddress, m_pCurFrameBuffer->m_startAddress, m_pCurFrameBuffer->m_size);
+			writeToRdram<u32, u16>(ptr_src, ptr_dst, &ColorBufferToRDRAM::_RGBAtoRGBA16, dummyTester<u32>, ENDIAN_XOR_1, width, height, numPixels, _startAddress, m_pCurFrameBuffer->m_startAddress, m_pCurFrameBuffer->m_size);
 	} else if (m_pCurFrameBuffer->m_size == G_IM_SIZ_8b) {
 		u8 *ptr_src = (u8*)pPixels;
 		u8 *ptr_dst = RDRAM + _startAddress;
-		writeToRdram<u8, u8>(ptr_src, ptr_dst, &ColorBufferToRDRAM::_RGBAtoR8, dummyTester<u8>, 3, width, height, numPixels, _startAddress, m_pCurFrameBuffer->m_startAddress, m_pCurFrameBuffer->m_size);
+		writeToRdram<u8, u8>(ptr_src, ptr_dst, &ColorBufferToRDRAM::_RGBAtoR8, dummyTester<u8>, ENDIAN_XOR_3, width, height, numPixels, _startAddress, m_pCurFrameBuffer->m_startAddress, m_pCurFrameBuffer->m_size);
 	}
 
 	m_pCurFrameBuffer->m_copiedToRdram = true;

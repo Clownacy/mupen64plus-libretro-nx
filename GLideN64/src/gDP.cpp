@@ -472,7 +472,7 @@ void gDPLoadTile32b(u32 uls, u32 ult, u32 lrs, u32 lrt)
 	for (u32 j = 0; j < height; ++j) {
 		tline = tbase + line * j;
 		s = ((j + ult) * gDP.textureImage.width) + uls;
-		xorval = (j & 1) ? 3 : 1;
+		xorval = (j & 1) ? ENDIAN_XOR_3 : ENDIAN_XOR_1;
 		for (u32 i = 0; i < width; ++i) {
 			c = src[addr + s + i];
 			ptr = ((tline + i) ^ xorval) & 0x3ff;

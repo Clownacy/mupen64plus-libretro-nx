@@ -1,7 +1,7 @@
 #ifndef ENDIAN_H
 #define ENDIAN_H
 
-#include "libretro_endianness.h"
+#include "retro_endianness.h"
 
 #if RETRO_IS_BIG_ENDIAN
 	#define ENDIAN_XOR_1 0

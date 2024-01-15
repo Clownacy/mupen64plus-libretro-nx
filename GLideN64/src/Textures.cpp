@@ -1326,7 +1326,7 @@ void TextureCache::_getTextureDestData(CachedTexture& tmptex,
 			ty = min(y, clampTClamp) & maskTMask;
 
 			u32 tline = tbase + line32 * ty;
-			u32 xorval = (ty & 1) ? 3 : 1;
+			u32 xorval = (ty & 1) ? ENDIAN_XOR_3 : ENDIAN_XOR_1;
 
 			for (x = 0; x < tmptex.width; ++x) {
 				tx = min(x, clampSClamp) & maskSMask;

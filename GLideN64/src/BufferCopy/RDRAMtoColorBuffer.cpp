@@ -206,12 +206,12 @@ void RDRAMtoColorBuffer::_copyFromRDRAM(u32 _height, bool _fullAlpha)
 	bool bCopy;
 	if (m_vecAddress.empty()) {
 		if (m_pCurBuffer->m_size == G_IM_SIZ_16b)
-			bCopy = _copyBufferFromRdram<u16>(address, pDst, RGBA16ToABGR32, 1, x0, y0, width, height, _fullAlpha);
+			bCopy = _copyBufferFromRdram<u16>(address, pDst, RGBA16ToABGR32, ENDIAN_XOR_1, x0, y0, width, height, _fullAlpha);
 		else
 			bCopy = _copyBufferFromRdram<u32>(address, pDst, RGBA32ToABGR32, 0, x0, y0, width, height, _fullAlpha);
 	} else {
 		if (m_pCurBuffer->m_size == G_IM_SIZ_16b)
-			bCopy = _copyPixelsFromRdram<u16>(address, m_vecAddress, pDst, RGBA16ToABGR32, 1, width, height, _fullAlpha);
+			bCopy = _copyPixelsFromRdram<u16>(address, m_vecAddress, pDst, RGBA16ToABGR32, ENDIAN_XOR_1, width, height, _fullAlpha);
 		else
 			bCopy = _copyPixelsFromRdram<u32>(address, m_vecAddress, pDst, RGBA32ToABGR32, 0, width, height, _fullAlpha);
 	}

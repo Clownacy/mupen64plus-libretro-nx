@@ -17,6 +17,9 @@ void DWordInterleaveWrap(u32 *src, u32 srcIdx, u32 srcMask, u32 numQWords);
 
 inline u16 swapword( u16 value )
 {
+#ifdef RETRO_IS_BIG_ENDIAN
+	return value;
+#elif RETRO_IS_LITTLE_ENDIAN
 #ifdef WIN32_ASM
 	__asm
 	{
@@ -26,6 +29,9 @@ inline u16 swapword( u16 value )
 #else // WIN32_ASM
 	return (value << 8) | (value >> 8);
 #endif // WIN32_ASM
+#else
+#error
+#endif
 }
 
 inline u16 RGBA8888_RGBA4444( u32 color )
@@ -104,15 +110,7 @@ inline u32 RGBA5551_RGBA8888( u16 color )
 // Just swaps the word
 inline u16 RGBA5551_RGBA5551( u16 color )
 {
-#ifdef WIN32_ASM
-	__asm
-	{
-		mov		ax, word ptr [color]
-		xchg	ah, al
-	}
-#else // WIN32_ASM
 	return swapword( color );
-#endif // WIN32_ASM
 }
 
 inline u32 IA88_RGBA8888( u16 color )

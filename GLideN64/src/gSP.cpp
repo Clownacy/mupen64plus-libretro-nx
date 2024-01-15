@@ -971,20 +971,20 @@ u32 gSPLoadCIVertexData(const PDVertex *orgVtx, SPVertex * spVtx, u32 v0, u32 vi
 			u8 *color = &RDRAM[gSP.vertexColorBase + (orgVtx->ci & 0xff)];
 
 			if (gSP.geometryMode & G_LIGHTING) {
-				vtx.nx = _FIXED2FLOATCOLOR((s8)color[3], 7);
-				vtx.ny = _FIXED2FLOATCOLOR((s8)color[2], 7);
-				vtx.nz = _FIXED2FLOATCOLOR((s8)color[1], 7);
+				vtx.nx = _FIXED2FLOATCOLOR((s8)color[3^ENDIAN_XOR_3], 7);
+				vtx.ny = _FIXED2FLOATCOLOR((s8)color[2^ENDIAN_XOR_3], 7);
+				vtx.nz = _FIXED2FLOATCOLOR((s8)color[1^ENDIAN_XOR_3], 7);
 				if (isHWLightingAllowed()) {
-					vtx.r = (s8)color[3];
-					vtx.g = (s8)color[2];
-					vtx.b = (s8)color[1];
+					vtx.r = (s8)color[3^ENDIAN_XOR_3];
+					vtx.g = (s8)color[2^ENDIAN_XOR_3];
+					vtx.b = (s8)color[1^ENDIAN_XOR_3];
 				}
 			} else {
-				vtx.r = _FIXED2FLOATCOLOR(color[3], 8);
-				vtx.g = _FIXED2FLOATCOLOR(color[2], 8);
-				vtx.b = _FIXED2FLOATCOLOR(color[1], 8);
+				vtx.r = _FIXED2FLOATCOLOR(color[3^ENDIAN_XOR_3], 8);
+				vtx.g = _FIXED2FLOATCOLOR(color[2^ENDIAN_XOR_3], 8);
+				vtx.b = _FIXED2FLOATCOLOR(color[1^ENDIAN_XOR_3], 8);
 			}
-			vtx.a = _FIXED2FLOATCOLOR(color[0], 8);
+			vtx.a = _FIXED2FLOATCOLOR(color[0^ENDIAN_XOR_3], 8);
 
 			++orgVtx;
 		}
